@@ -25,14 +25,15 @@ A simple and powerful terminal-based dashboard for MetaTrader 5 that shows all y
 
 ## 🖥️ How to Use
 
+
+> 1. Download and extract the zip file
+
+> 2. Run the script
+    python mt5_tpsl_manager.py
+
 ```bash
-# 1. Download and extract the zip file
-
-# 2. Run the script
-python mt5_tpsl_manager.py
-```
-
 > 📦 The script will automatically install the required `MetaTrader5` package on first run.
+```
 
 ---
 
