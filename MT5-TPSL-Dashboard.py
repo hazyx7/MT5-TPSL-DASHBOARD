@@ -1,24 +1,8 @@
-import subprocess
-import sys
-
-def install_and_import(package):
-    try:
-        __import__(package)
-    except ImportError:
-        print(f"Installing missing package: {package}")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        __import__(package)
-
-# Ensure required packages are installed
-install_and_import("MetaTrader5")
-install_and_import("msvcrt")  # On Windows, this is a built-in module and won't install
-
-
 import os
 import sys
 import time
+import subprocess
 import msvcrt
-import MetaTrader5 as mt5
 from datetime import datetime
 
 # Terminal colors
@@ -28,39 +12,84 @@ GREEN = "\033[92m"
 WHITE = "\033[97m"
 BLUE = "\033[94m"
 YELLOW = "\033[93m"
+GRAY = "\033[90m"
+LIGHT_GRAY = "\033[37m"
+
+# Auto-install MetaTrader5
+try:
+    import MetaTrader5 as mt5
+except ImportError:
+    print("Installing MetaTrader5...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "MetaTrader5"])
+    import MetaTrader5 as mt5
 
 # Globals
 SHOW_DETAILS = False
 IN_TP_SL_MODE = False
-REFRESH_DELAY = 0.01  # Faster for summary view
+REFRESH_DELAY = 0.01
 
 def clear_screen():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    os.system("cls" if os.name == "nt" else "clear")
+
+def set_terminal_size():
+    if os.name == "nt":
+        os.system("mode con: cols=100 lines=30")
+    else:
+        sys.stdout.write("\x1b[8;30;100t")
+
+def loading_bar(message, steps=24, delay=0.02):
+    print(f"{WHITE}{message}{RESET}")
+    print("[", end="", flush=True)
+    for i in range(steps):
+        if i < steps // 3:
+            color = GRAY
+        elif i < (2 * steps) // 3:
+            color = LIGHT_GRAY
+        else:
+            color = WHITE
+        print(f"{color}█{RESET}", end="", flush=True)
+        time.sleep(delay)
+    print(f"] {WHITE}Done!{RESET}\n")
+
+def startup_check():
+    clear_screen()
+    set_terminal_size()
+
+    loading_bar("Checking required Pip packages...")
+
+    print(f"{WHITE}Checking MetaTrader 5 connection...{RESET}")
+    if not mt5.initialize():
+        print(f"{RED}❌ MT5 not running or failed to connect.{RESET}")
+        input("Please open MT5 and press Enter to retry...")
+        return startup_check()
+    loading_bar("")
+
+    print(f"{WHITE}Checking AutoTrading status...{RESET}")
+    account = mt5.account_info()
+    if account is None or not account.trade_allowed:
+        print(f"{RED}❌ AutoTrading is disabled.{RESET}")
+        input("Please enable AutoTrading and press Enter to retry...")
+        return startup_check()
+    loading_bar("")
+
+    print(f"{GREEN}✅ All systems are GO!{RESET}")
+    time.sleep(1.2)
+    clear_screen()
 
 def color(val):
     if val > 0: return GREEN
     elif val < 0: return RED
     else: return WHITE
 
-def print_loading():
-    print("Connecting to MetaTrader 5\n[", end="", flush=True)
-    for _ in range(10):
-        print("█", end="", flush=True)
-        time.sleep(0.05)
-    print("] Connected!")
-    time.sleep(0.3)
-    clear_screen()
-
 def get_trade_data():
     positions = mt5.positions_get()
     account = mt5.account_info()
     balance = account.balance if account else 0.0
-
     total_pnl = 0.0
     return positions or [], total_pnl, balance
 
 def print_summary(positions, total_pnl, balance):
-    print("\n====== SUMMARY ======\n")
+    print(f"\n{WHITE}========= SUMMARY ========={RESET}\n")
     buy, sell, total_tp, total_sl, cur_pl = 0, 0, 0.0, 0.0, 0.0
 
     for pos in positions:
@@ -88,15 +117,15 @@ def print_summary(positions, total_pnl, balance):
     risk_pct = abs(total_sl / balance * 100) if balance else 0
 
     print(f"Trades Summary     : BUY = {buy}   | SELL = {sell}")
-    print(f"{color(cur_pl)}Total Current P&L : ${cur_pl:.2f}{RESET}")
-    print(f"{GREEN}TP Target         : ${total_tp:.2f}{RESET}")
-    print(f"{RED}SL Risk           : ${total_sl:.2f}{RESET}")
-    print(f"Risk on Account   : {risk_pct:.2f}%")
-    print(f"Account Balance   : ${balance:.2f}")
-    print("\nTAB = Toggle Summary/Details | ENTER = Set TP/SL | ESC = Exit")
+    print(f"Total Current P&L  : {color(cur_pl)}${cur_pl:.2f}{RESET}")
+    print(f"{GREEN}TP Target          : ${total_tp:.2f}{RESET}")
+    print(f"{RED}SL Risk            : ${total_sl:.2f}{RESET}")
+    print(f"Risk on Account    : {risk_pct:.2f}%")
+    print(f"Account Balance    : ${balance:.2f}")
+    print(f"\n{YELLOW}TAB = Toggle Summary/Details | ENTER = Set TP/SL | ESC = Exit{RESET}")
 
 def print_details(positions):
-    print("\n====== DETAILS ======\n")
+    print(f"\n{WHITE}========= DETAILS ========={RESET}\n")
     if not positions:
         print("No open trades.")
         return
@@ -110,48 +139,39 @@ def print_details(positions):
         trade_type = "BUY" if typ == mt5.ORDER_TYPE_BUY else "SELL"
 
         print(f"{sym} | {trade_type} | Volume: {vol:.2f}")
-
-        if tp > 0:
-            print(f"TP Price          : {tp:.2f}")
-        else:
-            print("TP Price          : Not Set")
-
-        if sl > 0:
-            print(f"SL Price          : {sl:.2f}")
-        else:
-            print("SL Price          : Not Set")
+        print(f"TP Price          : {tp:.2f}" if tp > 0 else "TP Price          : Not Set")
+        print(f"SL Price          : {sl:.2f}" if sl > 0 else "SL Price          : Not Set")
 
         if tp > 0 and sl > 0:
             rr = abs(tp - op) / abs(sl - op)
             print(f"R/R Ratio         : {rr:.2f}")
         print()
-    print("\nTAB = Toggle Summary/Details | ESC = Exit")
+
+    print(f"\n{YELLOW}TAB = Toggle Summary/Details | ESC = Exit{RESET}")
 
 def show_tp_sl_setter(positions):
     global IN_TP_SL_MODE
-    
+
     IN_TP_SL_MODE = True
     clear_screen()
-    
-    print(f"{BLUE}╔══════════════════════════════════════════════╗")
-    print(f"║{' ' * 20}TP/SL SETTER{' ' * 20}║")
-    print(f"╚══════════════════════════════════════════════╝{RESET}\n")
-    
+
+    print(f"{WHITE}========= TP/SL CONFIGURATION ========={RESET}\n")
+
     print(f"Found {len(positions)} open trade(s):\n")
     for i, pos in enumerate(positions, start=1):
         direction = "BUY " if pos.type == mt5.ORDER_TYPE_BUY else "SELL"
         print(f" {i}. {pos.symbol} | {direction} | Volume: {pos.volume:.2f} | Open: {pos.price_open:.5f} | TP: {pos.tp:.5f} | SL: {pos.sl:.5f}")
-    
+
     print(f"\n{YELLOW}Enter TP/SL values (0 to skip){RESET}")
     try:
         tp = float(input("TP Price: "))
         sl = float(input("SL Price: "))
         tp = None if tp == 0 else tp
         sl = None if sl == 0 else sl
-        
+
         print("\nApplying TP/SL to all positions...\n")
         time.sleep(0.5)
-        
+
         for pos in positions:
             already_tp = (tp is None or (pos.tp > 0 and abs(pos.tp - tp) < 0.00001))
             already_sl = (sl is None or (pos.sl > 0 and abs(pos.sl - sl) < 0.00001))
@@ -173,33 +193,29 @@ def show_tp_sl_setter(positions):
             result = mt5.order_send(request)
 
             if result.retcode == mt5.TRADE_RETCODE_DONE:
-                print(f"{pos.symbol} → Updated.")
+                print(f"{GREEN}{pos.symbol} → Updated.{RESET}")
             elif result.retcode == 10027:
-                print("\nAutoTrading is disabled in MT5.")
+                print(f"{RED}AutoTrading is disabled in MT5.{RESET}")
                 input("Enable AutoTrading and press Enter to retry...")
                 return show_tp_sl_setter(positions)
-            elif result.retcode == 10025 and already_tp and already_sl:
-                print(f"{pos.symbol} → Already Set.")
             else:
-                print(f"✗ {pos.symbol} FAILED | RetCode: {result.retcode}")
+                print(f"{RED}✗ {pos.symbol} FAILED | RetCode: {result.retcode}{RESET}")
 
             time.sleep(0.2)
 
-        print(f"\n{GREEN}╔══════════════════════════════╗")
-        print(f"║{' ' * 8}UPDATE COMPLETE{' ' * 8}║")
-        print(f"╚══════════════════════════════╝{RESET}")
-        input("\nPress Enter to return to summary...")
-        
+        print(f"\n{GREEN}UPDATE COMPLETE{RESET}")
+        input("Press Enter to return to summary...")
+
     except ValueError:
         print(f"{RED}Invalid input. Please enter valid numbers.{RESET}")
         time.sleep(1)
         show_tp_sl_setter(positions)
-    
+
     IN_TP_SL_MODE = False
 
 def run_loop():
     global SHOW_DETAILS, IN_TP_SL_MODE
-    print_loading()
+    startup_check()
 
     while True:
         if not IN_TP_SL_MODE:
@@ -211,10 +227,10 @@ def run_loop():
                 while True:
                     if msvcrt.kbhit():
                         key = msvcrt.getch()
-                        if key == b'\t':  # TAB key
+                        if key == b'\t':
                             SHOW_DETAILS = False
                             break
-                        elif key == b'\x1b':  # ESC key
+                        elif key == b'\x1b':
                             mt5.shutdown()
                             sys.exit()
                     time.sleep(0.05)
@@ -223,27 +239,20 @@ def run_loop():
                 for _ in range(int(1 / REFRESH_DELAY)):
                     if msvcrt.kbhit():
                         key = msvcrt.getch()
-                        if key == b'\t':  # TAB key
+                        if key == b'\t':
                             SHOW_DETAILS = True
                             break
-                        elif key == b'\r':  # ENTER key
+                        elif key == b'\r':
                             show_tp_sl_setter(positions)
                             break
-                        elif key == b'\x1b':  # ESC key
+                        elif key == b'\x1b':
                             mt5.shutdown()
                             sys.exit()
                     time.sleep(REFRESH_DELAY)
         else:
             time.sleep(0.1)
 
-# Initialize and run
-if not mt5.initialize():
-    clear_screen()
-    print(f"{RED}❌ Failed to connect to MetaTrader 5.{RESET}")
-    print("Make sure MT5 is running and logged in.")
-    input("Press Enter to exit...")
-    sys.exit()
-else:
+if __name__ == "__main__":
     try:
         run_loop()
     except Exception as e:
