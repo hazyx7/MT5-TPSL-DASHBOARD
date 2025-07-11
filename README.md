@@ -1,6 +1,6 @@
 # MT5-TPSL-Dashboard
 
-A simple and powerful terminal-based dashboard for MetaTrader 5 that shows all your open trades, calculates P&L, and lets you set Take Profit (TP) and Stop Loss (SL) in bulk — all from your command line.
+A simple and powerful dashboard for MetaTrader 5 that shows all your open trades, calculates P&L, and lets you set Take Profit (TP) and Stop Loss (SL) in bulk.
 
 ---
 
@@ -33,24 +33,15 @@ A simple and powerful terminal-based dashboard for MetaTrader 5 that shows all y
 > 📦 The script will automatically install the required `MetaTrader5` package on first run.
 ```
 
----
-
-## ⌨️ Controls
-
-- `TAB` → Toggle between Summary and Details  
-- `ENTER` → Set TP/SL for all open trades  
-- `ESC` → Exit the script
 
 ---
 
-## 📬 Contact
+## 📬 Info
 
-Have suggestions or need help?  
 Reach me out on Telegram: [@hazyx7](https://t.me/hazyx7)
-
----
 Built by combining:
 - [TPSLCalculatorMT5](https://github.com/hazyx7/TPSLCalculatorMT5)
 - [MT5BulkTPSL](https://github.com/hazyx7/MT5BulkTPSL)
 
+---
 Enjoy trading smarter!
