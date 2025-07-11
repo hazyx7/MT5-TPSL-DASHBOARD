@@ -1,3 +1,5 @@
+#By Hazyx7
+
 import os
 import sys
 import time
@@ -260,3 +262,5 @@ if __name__ == "__main__":
         input("Press Enter to exit...")
     finally:
         mt5.shutdown()
+
+#By Hazyx7
