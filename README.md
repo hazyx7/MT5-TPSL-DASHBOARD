@@ -1,4 +1,4 @@
-# MT5-TPSL-Dashboard
+# MT5 TPSL Dashboard
 
 A simple and powerful dashboard for MetaTrader 5 that shows all your open trades, calculates P&L, and lets you set Take Profit (TP) and Stop Loss (SL) in bulk.
 
