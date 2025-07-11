@@ -6,12 +6,10 @@ A simple and powerful terminal-based dashboard for MetaTrader 5 that shows all y
 
 ## 💡 Features
 
-- Live trade summary: buy/sell count, total P&L, TP/SL values, and risk percentage.
-- Detailed view: per-trade TP, SL, and risk/reward ratio.
-- Bulk TP/SL setter: update all open positions with a single input.
-- Smooth and fast UI with color-coded output.
-- Auto-installs required packages (no setup needed).
-- Easy navigation using keyboard keys.
+- Live trade summary: Buy/sell Count, Total Estimated Profit and Loss, and Total Risk Percentage.
+- Detailed view: Per-trade TP, SL, and Risk/Reward ratio.
+- Bulk TP/SL setter: Update all open positions with a single input.
+
 
 ---
 
