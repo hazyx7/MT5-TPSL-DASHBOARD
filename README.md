@@ -49,9 +49,6 @@ Have suggestions or need help?
 Reach me out on Telegram: [@hazyx7](https://t.me/hazyx7)
 
 ---
-
-## 🙏 Credits
-
 Built by combining:
 - [TPSLCalculatorMT5](https://github.com/hazyx7/TPSLCalculatorMT5)
 - [MT5BulkTPSL](https://github.com/hazyx7/MT5BulkTPSL)
