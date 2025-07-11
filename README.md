@@ -40,7 +40,7 @@ A simple and powerful dashboard for MetaTrader 5 that shows all your open trades
 
 Reach me out on Telegram: [Hazyx7](https://t.me/hazyx7)
 
-Built by combining:
+Built with:
 - [TPSLCalculatorMT5](https://github.com/hazyx7/TPSLCalculatorMT5)
 - [MT5BulkTPSL](https://github.com/hazyx7/MT5BulkTPSL)
 
