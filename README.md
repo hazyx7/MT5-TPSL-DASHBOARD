@@ -17,7 +17,7 @@ A simple and powerful dashboard for MetaTrader 5 that shows all your open trades
 
 - Python 
 - MetaTrader 5 
-- AutoTrading must be enabled!
+- Algo Trading must be enabled!
 
 ---
 
